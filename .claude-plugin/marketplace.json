@@ -1,0 +1,11 @@
+{
+  "name": "vibe-audit",
+  "owner": { "name": "wbuffetz" },
+  "plugins": [
+    {
+      "name": "vibe-audit",
+      "source": "./",
+      "description": "Security audit for AI-built web apps."
+    }
+  ]
+}

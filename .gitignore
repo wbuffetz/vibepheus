@@ -1,0 +1,6 @@
+node_modules/
+.DS_Store
+vibe-audit-report.md
+
+# Note: fixtures/vulnerable-app/.env.local is committed ON PURPOSE.
+# It holds only fake keys and is one of the planted bugs the benchmark checks.

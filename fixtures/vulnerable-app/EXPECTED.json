@@ -1,0 +1,84 @@
+{
+  "description": "Vulnerabilities deliberately planted in this app. The benchmark checks the scanner finds each one (rule + file) and counts any other finding of severity medium or higher as a false positive. Low/info findings are reported separately.",
+  "planted": [
+    {
+      "rule": "ENV_FILE_NOT_IGNORED",
+      "file": ".env.local",
+      "note": ".gitignore does not cover .env files"
+    },
+    {
+      "rule": "SECRET_IN_PUBLIC_ENV",
+      "file": ".env.local",
+      "note": "service role key in a NEXT_PUBLIC_ variable ships to every browser"
+    },
+    {
+      "rule": "SERVICE_ROLE_IN_CLIENT",
+      "file": "lib/supabase.ts",
+      "note": "imported by a 'use client' component"
+    },
+    {
+      "rule": "HARDCODED_SECRET",
+      "file": "app/api/checkout/route.ts",
+      "note": "Stripe live secret key in source"
+    },
+    {
+      "rule": "RLS_DISABLED",
+      "file": "supabase/migrations/001_init.sql",
+      "note": "orders table has no row level security"
+    },
+    {
+      "rule": "RLS_PERMISSIVE_POLICY",
+      "file": "supabase/migrations/001_init.sql",
+      "note": "profiles readable by anyone, including emails"
+    },
+    {
+      "rule": "API_ROUTE_NO_AUTH",
+      "file": "app/api/admin/users/route.ts",
+      "note": "anyone can delete users"
+    },
+    {
+      "rule": "POSSIBLE_IDOR",
+      "file": "app/api/orders/[id]/route.ts",
+      "note": "logged-in user can read anyone's order"
+    },
+    {
+      "rule": "CORS_WILDCARD",
+      "file": "next.config.js",
+      "note": "Allow-Origin * with credentials"
+    },
+    {
+      "rule": "FIREBASE_OPEN_RULES",
+      "file": "firestore.rules",
+      "note": "allow read, write: if true"
+    },
+    {
+      "rule": "XSS_UNSANITIZED_HTML",
+      "file": "components/Comment.tsx",
+      "note": "dangerouslySetInnerHTML with user comment"
+    },
+    {
+      "rule": "VULNERABLE_DEPENDENCY",
+      "file": "package.json",
+      "note": "next 14.1.0 (CVE-2025-29927)"
+    },
+    {
+      "rule": "API_ROUTE_NO_AUTH",
+      "file": "app/api/models/route.ts",
+      "note": "no auth + admin client + id from the body: anyone can use another user's stored API key (pattern found in a real open-source app)"
+    }
+  ],
+  "safe_lookalikes": [
+    "lib/supabase-admin.ts (service role, but server-only)",
+    "app/api/profile/route.ts (checks the user)",
+    "app/api/webhooks/stripe/route.ts (verifies the Stripe signature)",
+    "components/Markdown.tsx (sanitized with DOMPurify)",
+    ".env.example (placeholders only)",
+    "lib/firebase.ts (Firebase web API keys are public by design: info only)",
+    "comments table policy (any logged-in user can read comments: info only)",
+    "lib/actions.ts ('use server' action using the admin client, imported by a client component)",
+    "app/auth/callback/route.ts (OAuth callback, public by design)",
+    "app/api/settings/route.ts (auth through the requireUser() helper)",
+    ".env.local.example (placeholders only)",
+    "products table (public catalog: low only)"
+  ]
+}

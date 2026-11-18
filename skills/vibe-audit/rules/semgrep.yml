@@ -1,0 +1,79 @@
+# vibe-audit Semgrep rules. Used automatically when Semgrep is installed.
+# These cover code-level bugs the built-in scanner does not look for.
+# metadata.vibe_rule maps each result onto a vibe-audit rule (plain-language why/fix).
+
+rules:
+  - id: vibe-sql-injection
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: SQL built from user input (SQL injection)
+    metadata: { vibe_rule: SQL_INJECTION, cwe: "CWE-89" }
+    pattern-either:
+      - pattern: $PRISMA.$queryRawUnsafe(...)
+      - pattern: $PRISMA.$executeRawUnsafe(...)
+      - pattern: $SQL.unsafe(...)
+      - pattern: $DB.query(`...${$X}...`, ...)
+      - pattern: $DB.execute(`...${$X}...`, ...)
+      - pattern: $DB.raw(`...${$X}...`, ...)
+
+  - id: vibe-supabase-filter-injection
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: Supabase .or() filter built from a template string (filter injection)
+    metadata: { vibe_rule: SQL_INJECTION, cwe: "CWE-943" }
+    pattern: $Q.or(`...${$X}...`)
+
+  - id: vibe-code-injection
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: eval / new Function runs strings as code
+    metadata: { vibe_rule: CODE_INJECTION, cwe: "CWE-95" }
+    pattern-either:
+      - pattern: eval($X)
+      - pattern: new Function(...)
+
+  - id: vibe-command-injection
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: Shell command built from a template string (command injection)
+    metadata: { vibe_rule: COMMAND_INJECTION, cwe: "CWE-78" }
+    pattern-either:
+      - pattern: $CP.exec(`...${$X}...`, ...)
+      - pattern: $CP.execSync(`...${$X}...`, ...)
+      - pattern: exec(`...${$X}...`, ...)
+      - pattern: execSync(`...${$X}...`, ...)
+
+  - id: vibe-open-redirect
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: Redirect target taken from the URL (open redirect)
+    metadata: { vibe_rule: OPEN_REDIRECT, cwe: "CWE-601" }
+    pattern-either:
+      - pattern: redirect($REQ.nextUrl.searchParams.get(...))
+      - pattern: NextResponse.redirect($REQ.nextUrl.searchParams.get(...))
+      - pattern: $RES.redirect($REQ.query.$P)
+
+  - id: vibe-jwt-decode-not-verify
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: jwt.decode() does not check the signature
+    metadata: { vibe_rule: JWT_NOT_VERIFIED, cwe: "CWE-347" }
+    pattern: jwt.decode(...)
+
+  - id: vibe-insecure-cookie
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: Cookie set without httpOnly
+    metadata: { vibe_rule: INSECURE_COOKIE, cwe: "CWE-1004" }
+    pattern: $C.set($N, $V, {..., httpOnly: false, ...})
+
+  - id: vibe-weak-random-token
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: Math.random() used for something that looks like a token or code
+    metadata: { vibe_rule: WEAK_RANDOM_TOKEN, cwe: "CWE-338" }
+    patterns:
+      - pattern: $T = <... Math.random() ...>
+      - metavariable-regex:
+          metavariable: $T
+          regex: (?i).*(token|secret|code|otp|password|key|session).*
