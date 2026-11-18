@@ -105,6 +105,26 @@ Project names and details of unpatched issues are left out on purpose: they get 
 
 The remaining findings still need judgement. For example, a route that uses the admin client without auth is flagged high even if it only returns public usernames. Deciding that is the job of Claude's verification step (see `SKILL.md`). See [`fixtures/sample-report.md`](fixtures/sample-report.md) for the scanner's raw output.
 
+## How this was built
+
+I built vibe-audit with Claude Code, and the first version of the code was largely written by Claude. Here is what I did, and what the process taught me.
+
+**The problem.** My degree is in cybersecurity. Many websites are now built with AI by people who don't know the security mistakes that come with it, because nobody told them, not because they're careless. I wanted a tool that works for them: plain language, fixes included, no security background needed.
+
+**The design decisions.**
+- **Code scanning first, not URL scanning.** Probing websites you don't own is illegal in most countries. Scanning your own code avoids that, and it finds the serious bugs (missing auth checks, open database rules) that a URL scan can't see.
+- **A Claude skill, not a hosted service.** It runs inside the user's own Claude, so they pay for their own usage and their code is never uploaded to a third-party server.
+- **Proven tools for detection, Claude for judgement.** Pattern matching finds candidates and Claude verifies them, because a language model alone misses bugs and reports bugs that aren't there.
+
+**What testing taught me.** The first version scored 12 out of 12 on a test app with planted bugs. That score was meaningless, because the test app and the scanner were written together. So I ran the scanner on four real open-source projects and checked every finding by hand. **Out of about 41 findings, only around 5 were real.** Each false positive pointed to something real apps do that my test app didn't (server actions, auth helpers, OAuth callbacks...). Each one became a fix plus a regression test. After that, findings at medium or above dropped to 6, most of them real. The full skill, run end to end, also found issues the scanner can't, and I checked each of them against the code.
+
+**What I took from it:**
+- A benchmark you design yourself mostly confirms your own assumptions. Real-world data is the real test.
+- False positives decide whether people trust a security tool. One that cries wolf 35 times gets ignored.
+- When you find vulnerabilities in other people's projects, report them privately to the maintainers before publishing details. That's why the projects in the results table aren't named.
+
+**From here,** I'm writing the new features myself: testing the Semgrep, Gitleaks and osv-scanner integrations, adding Supabase Storage checks, and supporting more frameworks. The commit history shows who wrote what.
+
 ## Limits
 
 - Pattern-based checks miss things and can be wrong, which is why Claude verifies every finding. A clean result means these checks passed, **not** that the app is secure.
