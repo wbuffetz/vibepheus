@@ -1,6 +1,6 @@
 ---
 name: vibe-audit
-description: Security audit for AI-built ("vibe-coded") web apps. Scans the project's source code for the mistakes these apps make most (leaked API keys, Supabase service_role keys in the browser, tables without Row Level Security, open Firebase rules, API routes with no auth, IDOR, open CORS, XSS, vulnerable dependencies), checks each finding, explains it in plain language and fixes what the user approves. Use when the user asks "is my app secure", "check my code for vulnerabilities", "security audit", "scan my project", "did I leak any keys", "is my Supabase safe", or before they launch.
+description: Security audit for AI-built ("vibe-coded") web apps. Scans the project's source code for the mistakes these apps make most (leaked API keys, Supabase service_role keys in the browser, tables without Row Level Security, open Firebase rules, API routes with no auth, endpoints that spend money on AI/email/SMS APIs without limits, IDOR, open CORS, XSS, vulnerable dependencies), checks each finding, explains it in plain language and fixes what the user approves. Use when the user asks "is my app secure", "check my code for vulnerabilities", "security audit", "scan my project", "did I leak any keys", "is my Supabase safe", or before they launch.
 ---
 
 # vibe-audit
@@ -52,7 +52,7 @@ Spend a few minutes reading the code for these. They are common in AI-generated 
 3. **RLS policies for update/delete** have both `using` and `with check`, and users cannot change `user_id` or `role` columns on their own row.
 4. **Supabase Storage buckets**: private files are not in a public bucket.
 5. **Prices and amounts come from the server.** If the client sends the price to the checkout route, users can pay $0.01.
-6. **Rate limiting** on login, signup, password reset and any route that calls a paid API (OpenAI, Anthropic, email, SMS). Without it, one script can run up a large bill.
+6. **Rate limiting** on login, signup and password reset. (Routes that call paid APIs are covered by the scanner's `PAID_API_UNPROTECTED` check. Verify its findings: a rate limit may live somewhere the scanner didn't look, such as a gateway, an edge config or a wrapper two imports away.)
 7. **User-supplied URLs fetched by the server** (SSRF), for example "import from URL" features.
 8. **File uploads** check type and size.
 9. **If the app calls an LLM**, user text cannot make it reveal secrets or take privileged actions (prompt injection).

@@ -37,6 +37,7 @@ Fix these first:
 | `RLS_PERMISSIVE_POLICY` | Policies with `using (true)` that let everyone in |
 | `FIREBASE_OPEN_RULES` | `allow read, write: if true`, test-mode rules, open Realtime Database |
 | `API_ROUTE_NO_AUTH` | Next.js API routes with no authentication check |
+| `PAID_API_UNPROTECTED` | **Denial of wallet:** routes and server actions that call paid AI, email or SMS APIs (OpenAI, Anthropic, Gemini, Twilio, Resend... 15 SDKs and API hosts) without a login check or rate limit. Tells apart the owner's key from users' own keys |
 | `WEBHOOK_NO_SIGNATURE` | Webhooks that accept unsigned events |
 | `POSSIBLE_IDOR` | Routes that load a record by ID without checking who owns it |
 | `CORS_WILDCARD` | `Access-Control-Allow-Origin: *`, especially with credentials |
@@ -69,13 +70,13 @@ Optional extra coverage: `brew install semgrep gitleaks osv-scanner`.
 
 ### Test app
 
-`fixtures/vulnerable-app` is a deliberately insecure Next.js + Supabase app with 13 planted vulnerabilities and 12 safe look-alikes (a server-only admin client, a server action, an OAuth callback, auth through a helper, a webhook that verifies signatures, sanitized HTML...) to measure false positives. All keys in it are fake.
+`fixtures/vulnerable-app` is a deliberately insecure Next.js + Supabase app with 14 planted vulnerabilities and 15 safe look-alikes (a server-only admin client, a server action, an OAuth callback, auth through a helper, a webhook that verifies signatures, sanitized HTML...) to measure false positives. All keys in it are fake.
 
 ```bash
 node tests/benchmark.mjs
 ```
 ```
-Detected 13/13 planted vulnerabilities, 0 false positive(s) at medium or above, 2 low/info note(s).
+Detected 14/14 planted vulnerabilities, 0 false positive(s) at medium or above, 4 low/info note(s).
 ```
 
 ### Real open-source projects

@@ -85,6 +85,11 @@ const RULES = {
     why: 'Anyone on the internet can call this endpoint directly with curl. Hiding the button in your UI does not protect the API.',
     fix: 'At the top of the handler, get the current user (e.g. `supabase.auth.getUser()`, `auth()`, `getServerSession()`) and return 401 if there is none. For admin routes, also check the user\'s role.',
   },
+  PAID_API_UNPROTECTED: {
+    title: 'Endpoint that spends your money can be called without limits (denial of wallet)',
+    why: 'Every call to this endpoint makes a paid API call (AI, email or SMS) billed to your account. Without a login check and a rate limit, anyone can call it in a loop: a simple script making 10 requests per second makes 864,000 calls a day. People have woken up to bills of thousands of dollars this way.',
+    fix: 'Require login, then add a per-user rate limit (e.g. @upstash/ratelimit: 20 requests per minute). Cap output size (max_tokens), and set a monthly spending limit in the provider\'s dashboard as a safety net.',
+  },
   WEBHOOK_NO_SIGNATURE: {
     title: 'Webhook does not verify its signature',
     why: 'Anyone can send fake events to this URL (for example a fake "payment succeeded") unless you verify the provider\'s signature.',
@@ -532,14 +537,117 @@ class Scan {
 
   // Real apps wrap auth in helpers (getServerProfile(), requireAdmin()...). If the route calls a function
   // imported from a local module that itself performs an auth check, count the route as authenticated.
-  authViaHelper(f) {
+  authViaHelper(f) { return this.callsImportedWhere(f, (content) => Scan.AUTH_RE.test(content)) }
+
+  // True if `f` calls a function imported from a local module whose source satisfies `test`.
+  callsImportedWhere(f, test) {
     for (const m of f.content.matchAll(/import\s+(?:(\w+)\s*,?\s*)?(?:\{([^}]*)\})?\s*from\s*['"]([^'"]+)['"]/g)) {
       const target = this.resolveImport(f.rel, m[3])
-      if (!target || !Scan.AUTH_RE.test(this.byRel.get(target).content)) continue
+      if (!target || !test(this.byRel.get(target).content)) continue
       const names = [m[1], ...(m[2] ?? '').split(',').map((s) => s.trim().split(/\s+as\s+/).pop())].filter(Boolean)
-      if (names.some((n) => new RegExp(`\\b${n}\\s*\\(`).test(f.content))) return true
+      if (names.some((n) => /^\w+$/.test(n) && new RegExp(`\\b${n}\\s*[.(]`).test(f.content))) return true
     }
     return false
+  }
+
+  // ---------- denial of wallet: endpoints that spend money on paid APIs
+
+  static PAID_SDKS = [
+    { re: /openai/, name: 'OpenAI', kind: 'ai' }, { re: /@anthropic-ai\/sdk/, name: 'Anthropic', kind: 'ai' },
+    { re: /@google\/(generative-ai|genai)/, name: 'Google Gemini', kind: 'ai' }, { re: /groq-sdk/, name: 'Groq', kind: 'ai' },
+    { re: /@mistralai\/mistralai/, name: 'Mistral', kind: 'ai' }, { re: /cohere-ai/, name: 'Cohere', kind: 'ai' },
+    { re: /replicate/, name: 'Replicate', kind: 'ai' }, { re: /@fal-ai\/[\w-]+/, name: 'fal.ai', kind: 'ai' },
+    { re: /elevenlabs|@elevenlabs\/[\w-]+/, name: 'ElevenLabs', kind: 'ai' },
+    { re: /@aws-sdk\/client-bedrock-runtime/, name: 'AWS Bedrock', kind: 'ai' },
+    { re: /resend/, name: 'Resend', kind: 'email' }, { re: /@sendgrid\/mail/, name: 'SendGrid', kind: 'email' },
+    { re: /@aws-sdk\/client-sesv?2?/, name: 'AWS SES', kind: 'email' },
+    { re: /twilio/, name: 'Twilio', kind: 'sms' }, { re: /@aws-sdk\/client-sns/, name: 'AWS SNS', kind: 'sms' },
+  ]
+  static PAID_HOSTS = [
+    ['api.openai.com', 'OpenAI', 'ai'], ['api.anthropic.com', 'Anthropic', 'ai'], ['generativelanguage.googleapis.com', 'Google Gemini', 'ai'],
+    ['api.groq.com', 'Groq', 'ai'], ['api.mistral.ai', 'Mistral', 'ai'], ['api.replicate.com', 'Replicate', 'ai'],
+    ['openrouter.ai/api', 'OpenRouter', 'ai'], ['api.together.xyz', 'Together AI', 'ai'], ['api.perplexity.ai', 'Perplexity', 'ai'],
+    ['api.deepseek.com', 'DeepSeek', 'ai'], ['api.x.ai', 'xAI', 'ai'], ['api.elevenlabs.io', 'ElevenLabs', 'ai'],
+    ['api.resend.com', 'Resend', 'email'], ['api.sendgrid.com', 'SendGrid', 'email'], ['api.twilio.com', 'Twilio', 'sms'],
+  ]
+  static RATE_LIMIT_RE = /@upstash\/ratelimit|\bRatelimit\b|rate[-_ ]?limit|rateLimiter|slidingWindow|fixedWindow|tokenBucket|express-rate-limit|arcjet|\bthrottle|\bquota\b|usage[-_]?limit|maxMessages|entitlements?\b/i
+
+  // Which paid API (if any) this source calls directly.
+  static paidApiUse(content) {
+    for (const [host, name, kind] of Scan.PAID_HOSTS) if (content.includes(`https://${host}`)) return { name, kind }
+    for (const m of content.matchAll(/import\s+(type\s+)?[^'"]*?from\s*['"]([^'"]+)['"]|require\(\s*['"]([^'"]+)['"]\s*\)/g)) {
+      if (m[1]) continue // type-only import
+      const spec = m[2] ?? m[3]
+      // Vercel AI SDK: only server-side generation calls cost money (not UI hooks or types)
+      if (/^(ai|@ai-sdk\/(?!react|ui-utils|svelte|vue)[\w-]+)$/.test(spec)) {
+        if (/\b(generateText|streamText|generateObject|streamObject|embedMany|embed|generateImage|generateSpeech)\s*\(/.test(content)) return { name: 'an AI model (Vercel AI SDK)', kind: 'ai' }
+        continue
+      }
+      const sdk = Scan.PAID_SDKS.find((s) => new RegExp(`^(${s.re.source})$`).test(spec))
+      if (sdk) return { name: sdk.name, kind: sdk.kind }
+    }
+    return null
+  }
+
+  checkDenialOfWallet() {
+    const middlewareLimits = this.files.some((f) => /^(src\/)?middleware\.(t|j)s$/.test(f.rel) && Scan.RATE_LIMIT_RE.test(f.content))
+    const candidates = [...this.routeFiles(), ...this.files.filter((f) => /\.(t|j)sx?$/.test(f.rel) && /^['"]use server['"]/m.test(f.content))]
+    for (const f of new Set(candidates)) {
+      let paid = Scan.paidApiUse(f.content)
+      if (!paid) {
+        // one level of local helpers, e.g. lib/ai.ts wrapping the OpenAI client
+        for (const m of f.content.matchAll(/from\s*['"]([^'"]+)['"]/g)) {
+          const t = this.resolveImport(f.rel, m[1])
+          const use = t && Scan.paidApiUse(this.byRel.get(t).content)
+          if (use && this.callsImportedWhere(f, (c) => c === this.byRel.get(t).content)) { paid = use; break }
+        }
+      }
+      if (!paid) continue
+
+      // Bring-your-own-key: the user's key is passed in, so the app owner isn't paying.
+      // Owner pays: a provider key from the environment (ignoring unrelated keys like SUPABASE_SERVICE_ROLE_KEY),
+      // or an SDK constructed with no arguments, which reads its key from the environment.
+      const ownerKey = /process\.env\.(?![A-Z0-9_]*(SUPABASE|STRIPE|DATABASE|POSTGRES|REDIS|UPSTASH|NEXTAUTH|JWT|CLERK|WEBHOOK|CRON))[A-Z0-9_]*(API_?KEY|TOKEN|SECRET)/.test(f.content)
+        || /new\s+(OpenAI|Anthropic|Groq|Resend|Replicate)\(\s*\)/.test(f.content)
+      // User pays: the key is read from user data, e.g. profile.openai_api_key or model.api_key.
+      const byoKey = !ownerKey && /(?<!process\.)\b\w+\??\.\w*api_?key\b/i.test(f.content)
+      const auth = Scan.AUTH_RE.test(f.content) || Scan.SIG_RE.test(f.content) || this.authViaHelper(f)
+      const limited = middlewareLimits || Scan.RATE_LIMIT_RE.test(f.content) || this.callsImportedWhere(f, (c) => Scan.RATE_LIMIT_RE.test(c))
+      if (auth && limited) continue
+
+      const line = lineOf(f.content, Math.max(0, f.content.search(/export\s+(async\s+)?(function|const|default)/)))
+      const what = paid.kind === 'sms' ? 'sends paid SMS' : paid.kind === 'email' ? 'sends paid email' : `calls ${paid.name}`
+      const capped = /max_?tokens|maxTokens|maxOutputTokens|max_output_tokens/.test(f.content)
+      const details = [`provider: ${paid.name}`, `login check: ${auth ? 'yes' : 'no'}`, `rate limit: ${limited ? 'yes' : 'no'}`, ...(paid.kind === 'ai' ? [`output cap (max_tokens): ${capped ? 'yes' : 'no'}`] : [])]
+
+      if (byoKey && !auth) {
+        this.add('PAID_API_UNPROTECTED', 'high', f.rel, line, {
+          title: `${f.rel} ${what} using users' stored API keys, with no login check`, details,
+          why: 'This endpoint uses an API key stored for a user, but anyone can call it without logging in. If the caller can choose whose key is used (for example by passing an ID), they can spend other users\' money.',
+          fix: 'Require login, and only ever load the key that belongs to the logged-in user (filter by user_id, or use the user\'s own client so Row Level Security applies). Add a rate limit too.',
+        })
+      } else if (byoKey) {
+        this.add('PAID_API_UNPROTECTED', 'info', f.rel, line, {
+          title: `${f.rel} ${what} using a key the user supplies`, details, confidence: 'medium',
+          why: 'The API key appears to come from the user (their profile or the request), so abuse spends their money, not yours. Make sure users can only use their own key.',
+        })
+      } else if (!auth && !limited) {
+        this.add('PAID_API_UNPROTECTED', paid.kind === 'sms' ? 'critical' : 'high', f.rel, line, {
+          title: `${f.rel} ${what} with no login check and no rate limit`, details,
+          ...(paid.kind === 'sms' ? { why: `${RULES.PAID_API_UNPROTECTED.why} SMS is the worst case: attackers run "SMS pumping" fraud, sending messages to premium numbers they profit from.` } : {}),
+        })
+      } else if (auth) {
+        this.add('PAID_API_UNPROTECTED', 'medium', f.rel, line, {
+          title: `${f.rel} ${what}: logged-in users can call it without any limit`, details, confidence: 'medium',
+          why: 'Only logged-in users can call this, but nothing limits how often. If anyone can sign up for free, an attacker can create an account and call it in a loop, billed to you.',
+        })
+      } else {
+        this.add('PAID_API_UNPROTECTED', 'low', f.rel, line, {
+          title: `${f.rel} ${what} without a login check (rate limited)`, details, confidence: 'medium',
+          why: 'A rate limit is in place, which caps the damage, but anyone on the internet can still use this endpoint at your expense up to that limit.',
+        })
+      }
+    }
   }
 
   routeFiles() {
@@ -778,8 +886,11 @@ class Scan {
   runAll() {
     this.checkSecrets(); this.checkGitHistory(); this.checkPublicEnv(); this.checkEnvFiles()
     this.checkServiceRoleInClient(); this.checkSupabaseSql(); this.checkFirebaseRules()
-    this.checkApiRoutes(); this.checkCors(); this.checkXss(); this.checkDependencies()
+    this.checkApiRoutes(); this.checkDenialOfWallet(); this.checkCors(); this.checkXss(); this.checkDependencies()
     this.runExternal()
+    // A high/critical denial-of-wallet finding already says "no login check": don't report the same route twice.
+    const walletNoAuth = new Set(this.findings.filter((f) => f.rule === 'PAID_API_UNPROTECTED' && ['critical', 'high'].includes(f.severity)).map((f) => f.file))
+    this.findings = this.findings.filter((f) => !(f.rule === 'API_ROUTE_NO_AUTH' && walletNoAuth.has(f.file)))
     const seen = new Set()
     this.findings = this.findings.filter((f) => { const k = `${f.rule}|${f.file}|${f.line}|${f.title}`; if (seen.has(k)) return false; seen.add(k); return true })
     this.findings.sort((a, b) => SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity) || String(a.file).localeCompare(String(b.file)) || (a.line ?? 0) - (b.line ?? 0))

@@ -65,6 +65,11 @@
       "rule": "API_ROUTE_NO_AUTH",
       "file": "app/api/models/route.ts",
       "note": "no auth + admin client + id from the body: anyone can use another user's stored API key (pattern found in a real open-source app)"
+    },
+    {
+      "rule": "PAID_API_UNPROTECTED",
+      "file": "app/api/generate/route.ts",
+      "note": "OpenAI on the owner's key with no login check and no rate limit (denial of wallet)"
     }
   ],
   "safe_lookalikes": [
@@ -79,6 +84,9 @@
     "app/auth/callback/route.ts (OAuth callback, public by design)",
     "app/api/settings/route.ts (auth through the requireUser() helper)",
     ".env.local.example (placeholders only)",
-    "products table (public catalog: low only)"
+    "products table (public catalog: low only)",
+    "app/api/summarize/route.ts (AI call with login, per-user rate limit and output cap)",
+    "app/api/translate/route.ts (uses the user's own API key: info only)",
+    "app/api/vision/route.ts (user's own Gemini key passed positionally; an unrelated SUPABASE_SERVICE_ROLE_KEY must not count as 'owner pays': info only)"
   ]
 }

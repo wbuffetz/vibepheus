@@ -107,6 +107,45 @@ export async function DELETE(req: Request) {
 ```
 Use `getUser()` (verifies with Supabase), not `getSession()` (trusts the cookie), on the server.
 
+## PAID_API_UNPROTECTED (denial of wallet)
+
+Three layers: login, a per-user rate limit, and a spending cap at the provider.
+
+```ts
+// lib/ratelimit.ts
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+
+export const aiLimiter = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(20, '1 m'), // 20 requests per minute per user
+})
+```
+```ts
+// app/api/generate/route.ts
+export async function POST(req: Request) {
+  const supabase = await createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { success } = await aiLimiter.limit(user.id)
+  if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+
+  const { prompt } = await req.json()
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    max_tokens: 500,                                         // cap the cost of each call
+    messages: [{ role: 'user', content: String(prompt).slice(0, 4000) }], // cap input size too
+  })
+  return NextResponse.json({ text: completion.choices[0].message.content })
+}
+```
+Then, in the provider's dashboard (OpenAI, Anthropic, Twilio...), set a **monthly spending limit** and a usage alert. That's the safety net if everything else fails.
+
+For SMS (Twilio), also limit messages per phone number and per IP, and block premium-rate and unexpected countries. Attackers use "SMS pumping" to send messages to numbers they profit from.
+
+If users bring their own API key, make sure each request can only use the logged-in user's key (filter by `user_id`, never by an ID from the request).
+
 ## WEBHOOK_NO_SIGNATURE
 
 ```ts
