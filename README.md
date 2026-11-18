@@ -59,6 +59,17 @@ Or from a local folder: `/plugin marketplace add ./vibepheus`.
 
 Then, in any project, ask *"run a security audit"* or *"is my app secure?"*.
 
+### Commands
+
+| Command | What it does |
+|---|---|
+| `/vibepheus` | Full audit: asks your level, scans, verifies every finding, writes the report, fixes what you approve |
+| `/vibepheus:quick` | Scanner only, no review. Results in seconds; may include false alarms |
+| `/vibepheus:keys` | Leaked secrets only (code, git history, public env variables, `.env` files), with how to rotate each key |
+| `/vibepheus:fix` | Fixes findings from the last report, e.g. `/vibepheus:fix critical and high`, then re-scans |
+| `/vibepheus:explain` | One finding in depth, e.g. `/vibepheus:explain VP-003`: why it's there, how it would be abused, the fix |
+| `/vibepheus:prelaunch` | Go-live checklist: code checks plus the hosting and account settings no scanner can see (spending limits, backups, key rotation...) |
+
 **Claude apps (skill upload):** zip the `skills/vibepheus` folder and upload it under Settings → Capabilities → Skills. (Not yet tested there.)
 
 **Standalone / CI:**
@@ -66,6 +77,7 @@ Then, in any project, ask *"run a security audit"* or *"is my app secure?"*.
 node skills/vibepheus/scripts/scan.mjs path/to/project                 # markdown report
 node skills/vibepheus/scripts/scan.mjs path/to/project --json          # JSON
 node skills/vibepheus/scripts/scan.mjs . --fail-on high                # exit 1 if any high+ finding
+node skills/vibepheus/scripts/scan.mjs . --only secrets              # just the secret checks
 ```
 Optional extra coverage: `brew install semgrep gitleaks osv-scanner`.
 

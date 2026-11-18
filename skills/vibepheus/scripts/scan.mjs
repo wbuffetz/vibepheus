@@ -20,7 +20,7 @@ const SENSITIVE_COLUMNS = /\b(email|phone|address|password|token|secret|ssn|birt
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
-  const opts = { target: '.', json: false, out: null, offline: false, external: true, failOn: null }
+  const opts = { target: '.', json: false, out: null, offline: false, external: true, failOn: null, only: null }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (a === '--json') opts.json = true
@@ -28,14 +28,26 @@ function parseArgs(argv) {
     else if (a === '--offline') opts.offline = true
     else if (a === '--no-external') opts.external = false
     else if (a === '--fail-on') opts.failOn = argv[++i]
+    else if (a === '--only') opts.only = argv[++i]
     else if (a === '-h' || a === '--help') {
-      console.log('Usage: node scan.mjs [project-dir] [--json] [--out FILE] [--offline] [--no-external] [--fail-on critical|high|medium|low]')
+      console.log('Usage: node scan.mjs [project-dir] [--json] [--out FILE] [--offline] [--no-external] [--fail-on critical|high|medium|low] [--only secrets|RULE,RULE...]')
       process.exit(0)
     } else if (!a.startsWith('-')) opts.target = a
     else { console.error(`Unknown option: ${a}`); process.exit(2) }
   }
+  if (opts.only) {
+    const names = opts.only.split(',').flatMap((x) => RULE_GROUPS[x.trim()] ?? [x.trim().toUpperCase()])
+    const unknown = names.filter((n) => !RULES[n])
+    if (unknown.length) { console.error(`--only: unknown rule(s) ${unknown.join(', ')}. Use a group (${Object.keys(RULE_GROUPS).join(', ')}) or rule names.`); process.exit(2) }
+    opts.only = new Set(names)
+  }
   if (opts.failOn && !SEVERITIES.includes(opts.failOn)) { console.error(`--fail-on must be one of ${SEVERITIES.join(', ')}`); process.exit(2) }
   return opts
+}
+
+// Named groups for --only.
+const RULE_GROUPS = {
+  secrets: ['HARDCODED_SECRET', 'SECRET_IN_GIT_HISTORY', 'SECRET_IN_PUBLIC_ENV', 'ENV_FILE_NOT_IGNORED', 'SERVICE_ROLE_IN_CLIENT', 'PUBLIC_API_KEY'],
 }
 
 // ---------------------------------------------------------------- rule catalogue
@@ -893,10 +905,11 @@ class Scan {
     // A high/critical denial-of-wallet finding already says "no login check": don't report the same route twice.
     const walletNoAuth = new Set(this.findings.filter((f) => f.rule === 'PAID_API_UNPROTECTED' && ['critical', 'high'].includes(f.severity)).map((f) => f.file))
     this.findings = this.findings.filter((f) => !(f.rule === 'API_ROUTE_NO_AUTH' && walletNoAuth.has(f.file)))
+    if (this.opts.only) this.findings = this.findings.filter((f) => this.opts.only.has(f.rule))
     const seen = new Set()
     this.findings = this.findings.filter((f) => { const k = `${f.rule}|${f.file}|${f.line}|${f.title}`; if (seen.has(k)) return false; seen.add(k); return true })
     this.findings.sort((a, b) => SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity) || String(a.file).localeCompare(String(b.file)) || (a.line ?? 0) - (b.line ?? 0))
-    this.findings.forEach((f, i) => { f.id = `VA-${String(i + 1).padStart(3, '0')}` })
+    this.findings.forEach((f, i) => { f.id = `VP-${String(i + 1).padStart(3, '0')}` })
     return this
   }
 
