@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: 01-fp-idor-rls
+tags: [false-positive]
+context:
+  scaffold_script: setup.sh

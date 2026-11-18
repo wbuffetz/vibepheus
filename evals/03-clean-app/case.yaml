@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: 03-clean-app
+tags: [control]
+context:
+  scaffold_script: setup.sh

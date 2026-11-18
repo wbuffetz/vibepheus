@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: 02-tp-stored-key-proxy
+tags: [true-positive]
+context:
+  scaffold_script: setup.sh
