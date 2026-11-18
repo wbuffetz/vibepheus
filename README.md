@@ -25,7 +25,7 @@ Fix these first:
 3. **You get a report in plain language.** Each finding covers what an attacker could do and how to fix it.
 4. **Claude fixes what you approve,** then re-runs the scan to confirm.
 
-**Your code stays on your machine.** The scanner runs locally. Claude sees the code through your own Claude account, the same way it does whenever you code with it. Nothing is uploaded to a third-party service. The only network call is the optional `npm audit` (skip it with `--offline`).
+**Your code stays on your machine.** The scanner runs locally. Claude sees the code through your own Claude account, the same way it does whenever you code with it. Nothing is uploaded to a third-party service. The only network calls are the dependency checks (`npm audit`, and osv-scanner if installed), which send package names and versions, never code. Skip them with `--offline`.
 
 ## What it checks
 
@@ -68,6 +68,7 @@ Then, in any project, ask *"run a security audit"* or *"is my app secure?"*.
 | `/vibepheus:keys` | Leaked secrets only (code, git history, public env variables, `.env` files), with how to rotate each key |
 | `/vibepheus:fix` | Fixes findings from the last report, e.g. `/vibepheus:fix critical and high`, then re-scans |
 | `/vibepheus:explain` | One finding in depth, e.g. `/vibepheus:explain VP-003`: why it's there, how it would be abused, the fix |
+| `/vibepheus:setup` | Shows which optional extra tools (Semgrep, Gitleaks, osv-scanner) are installed and offers to install the missing ones. Nothing is installed without your yes |
 | `/vibepheus:prelaunch` | Go-live checklist: code checks plus the hosting and account settings no scanner can see (spending limits, backups, key rotation...) |
 
 **Claude apps (skill upload):** zip the `skills/vibepheus` folder and upload it under Settings → Capabilities → Skills. (Not yet tested there.)
@@ -79,7 +80,7 @@ node skills/vibepheus/scripts/scan.mjs path/to/project --json          # JSON
 node skills/vibepheus/scripts/scan.mjs . --fail-on high                # exit 1 if any high+ finding
 node skills/vibepheus/scripts/scan.mjs . --only secrets              # just the secret checks
 ```
-Optional extra coverage: `brew install semgrep gitleaks osv-scanner`.
+Optional extra coverage: `brew install semgrep gitleaks osv-scanner`, or run `/vibepheus:setup`. During a full audit, vibepheus asks whether to install the missing ones or skip; it never installs anything without asking.
 
 ## Benchmark
 

@@ -850,6 +850,7 @@ class Scan {
 
   runOsv() {
     if (!have('osv-scanner')) { this.tools['osv-scanner'] = 'not installed'; return }
+    if (this.opts.offline) { this.tools['osv-scanner'] = 'skipped (--offline: it looks up package versions online)'; return }
     let r = run('osv-scanner', ['scan', 'source', '-r', '--format', 'json', this.root])
     let data = (() => { try { return JSON.parse(r.stdout) } catch { return null } })()
     if (!data) { r = run('osv-scanner', ['--format', 'json', '-r', this.root]); try { data = JSON.parse(r.stdout) } catch {} }

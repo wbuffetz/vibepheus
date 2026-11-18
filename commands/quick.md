@@ -15,5 +15,6 @@ Run a quick vibepheus scan. This is the scanner alone: fast and cheap, but its f
    - the counts by severity
    - a short table of findings: ID, severity, title, `file:line`
    - one line saying these are unverified scanner results, and that `/vibepheus` checks each one and explains the fixes.
+   - if `externalTools` shows tools as `not installed`, one line saying `/vibepheus:setup` can install them. Do not offer to install them here: this command is meant to be quick.
 
 Rules: never print a full secret (the scanner already redacts them; keep it that way). Never say the app is "safe" or "secure". Do not edit any file. Do not open the flagged files: this command is meant to be quick.

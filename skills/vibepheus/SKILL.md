@@ -14,7 +14,7 @@ Users range from people who have never written code to security professionals, s
 - **Never print a full secret.** Show at most the first 8 characters. The scanner already redacts its output; keep it that way in your report.
 - **Never say the app is "safe" or "secure".** Say which checks passed. Automated checks miss things.
 - **Do not edit any file until the user approves the fix.**
-- **The code stays local.** The scanner runs on this machine and sends nothing anywhere. The only exception is `npm audit`, which sends the dependency list to the npm registry; pass `--offline` if the user does not want that.
+- **The code stays local.** The scanner runs on this machine and sends nothing anywhere. The only exceptions are `npm audit` and osv-scanner (if installed), which send the list of package names and versions (never the code) to the npm registry and Google's OSV database; pass `--offline` if the user does not want that.
 
 ## Step 0: Ask who you are talking to
 
@@ -50,7 +50,18 @@ Run it as one plain `node` command with the full paths written out. Do not use s
 
 Then read `/tmp/vibepheus.json`. It contains the detected stack, a severity summary and a list of findings, each with `rule`, `severity`, `confidence`, `file`, `line`, `evidence`, `why` and `fix`.
 
-If Semgrep, Gitleaks or osv-scanner are installed, the scanner uses them automatically (see `externalTools` in the output). If none are installed, mention once at the end that installing them adds coverage (`brew install semgrep gitleaks osv-scanner`). Do not install anything yourself without asking.
+### Step 1b: Offer the extra tools (ask, never install silently)
+
+If Semgrep, Gitleaks or osv-scanner are installed, the scanner uses them automatically. Check `externalTools` in the output: any marked `not installed` are missing.
+
+If one or more are missing **and they would add coverage for this project**, ask the user once, before Step 2, whether to install them now or skip. Follow `references/extra-tools.md` for:
+- when they add coverage, and when to skip the question (e.g. a single static HTML file with no dependencies),
+- the exact question to ask, with "Install them" and "Skip for now" as the two answers (use the AskUserQuestion tool if you have it),
+- how to install on each system, and what to do if installing fails.
+
+If the user picks **Install**, install only the missing tools, then run the Step 1 scanner command again so the results include them. If they pick **Skip**, continue with the built-in results, and mention in one line at the end of the report that `/vibepheus:setup` installs them later. Do not ask again in the same conversation.
+
+Never install anything without that yes. If you cannot ask (for example, running non-interactively), skip, and say so in the report.
 
 ## Step 2: Verify every finding
 
