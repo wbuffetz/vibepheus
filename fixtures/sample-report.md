@@ -1,4 +1,4 @@
-# vibe-audit report
+# vibepheus report
 
 Scanned 32 files in `vulnerable-app` (nextjs + Supabase + Firebase).
 
@@ -233,6 +233,6 @@ create policy "users read comments" on public.comments
 **How to fix:** Restrict the policy to the row owner, e.g. `using (auth.uid() = id)`, or to the `authenticated` role if the data really is shared.
 
 ---
-External tools: semgrep: not installed · gitleaks: not installed · osv-scanner: not installed · npm audit: skipped (--offline)
+External tools: external: skipped (--no-external)
 
 _Automated checks only. "No findings" means these checks passed, not that the app is secure._

@@ -11,7 +11,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const APP = path.join(ROOT, 'fixtures', 'vulnerable-app')
 const expected = JSON.parse(fs.readFileSync(path.join(APP, 'EXPECTED.json'), 'utf8')).planted
 
-const r = spawnSync(process.execPath, [path.join(ROOT, 'skills/vibe-audit/scripts/scan.mjs'), APP, '--json', '--offline', '--no-external'], { encoding: 'utf8' })
+const r = spawnSync(process.execPath, [path.join(ROOT, 'skills/vibepheus/scripts/scan.mjs'), APP, '--json', '--offline', '--no-external'], { encoding: 'utf8' })
 if (r.status !== 0) { console.error(r.stderr); process.exit(1) }
 const { findings } = JSON.parse(r.stdout)
 

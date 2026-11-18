@@ -1,6 +1,6 @@
-# vibe-audit Semgrep rules. Used automatically when Semgrep is installed.
+# vibepheus Semgrep rules. Used automatically when Semgrep is installed.
 # These cover code-level bugs the built-in scanner does not look for.
-# metadata.vibe_rule maps each result onto a vibe-audit rule (plain-language why/fix).
+# metadata.vibe_rule maps each result onto a vibepheus rule (plain-language why/fix).
 
 rules:
   - id: vibe-sql-injection

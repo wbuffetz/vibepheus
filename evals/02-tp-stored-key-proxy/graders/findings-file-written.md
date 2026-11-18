@@ -1,5 +1,5 @@
 ---
 type: file_exists
-path: vibe-audit-findings.json
+path: vibepheus-findings.json
 exists: true
 ---

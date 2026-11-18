@@ -1,8 +1,10 @@
-# vibe-audit
+# vibepheus
 
 **A security audit for AI-built web apps, as a Claude skill.**
 
-People ship apps built with AI without knowing the security mistakes that come with them: API keys in the browser, databases anyone can read, admin endpoints with no login check. vibe-audit finds those mistakes, explains each one in plain language, and fixes the ones you approve, using your own Claude.
+The name is vibe + Morpheus: take the red pill and see what's really going on behind your vibe-coded app.
+
+People ship apps built with AI without knowing the security mistakes that come with them: API keys in the browser, databases anyone can read, admin endpoints with no login check. vibepheus finds those mistakes, explains each one in plain language, and fixes the ones you approve, using your own Claude.
 
 ```
 > is my app secure?
@@ -49,20 +51,20 @@ Fix these first:
 
 **Claude Code (plugin):**
 ```
-/plugin marketplace add wbuffetz/vibe-audit
-/plugin install vibe-audit@vibe-audit
+/plugin marketplace add wbuffetz/vibepheus
+/plugin install vibepheus@vibepheus
 ```
-Or from a local folder: `/plugin marketplace add ./vibe-audit`.
+Or from a local folder: `/plugin marketplace add ./vibepheus`.
 
 Then, in any project, ask *"run a security audit"* or *"is my app secure?"*.
 
-**Claude apps (skill upload):** zip the `skills/vibe-audit` folder and upload it under Settings → Capabilities → Skills. (Not yet tested there.)
+**Claude apps (skill upload):** zip the `skills/vibepheus` folder and upload it under Settings → Capabilities → Skills. (Not yet tested there.)
 
 **Standalone / CI:**
 ```bash
-node skills/vibe-audit/scripts/scan.mjs path/to/project                 # markdown report
-node skills/vibe-audit/scripts/scan.mjs path/to/project --json          # JSON
-node skills/vibe-audit/scripts/scan.mjs . --fail-on high                # exit 1 if any high+ finding
+node skills/vibepheus/scripts/scan.mjs path/to/project                 # markdown report
+node skills/vibepheus/scripts/scan.mjs path/to/project --json          # JSON
+node skills/vibepheus/scripts/scan.mjs . --fail-on high                # exit 1 if any high+ finding
 ```
 Optional extra coverage: `brew install semgrep gitleaks osv-scanner`.
 
@@ -108,7 +110,7 @@ The remaining findings still need judgement. For example, a route that uses the 
 
 ## How this was built
 
-I built vibe-audit with Claude Code, and the first version of the code was largely written by Claude. Here is what I did, and what the process taught me.
+I built vibepheus with Claude Code, and the first version of the code was largely written by Claude. Here is what I did, and what the process taught me.
 
 **The problem.** My degree is in cybersecurity. Many websites are now built with AI by people who don't know the security mistakes that come with it, because nobody told them, not because they're careless. I wanted a tool that works for them: plain language, fixes included, no security background needed.
 

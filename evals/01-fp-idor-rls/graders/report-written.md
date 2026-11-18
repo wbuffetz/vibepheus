@@ -1,5 +1,5 @@
 ---
 type: file_exists
-path: vibe-audit-report.md
+path: vibepheus-report.md
 exists: true
 ---

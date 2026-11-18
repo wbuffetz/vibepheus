@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// vibe-audit scanner: finds the security mistakes AI-built web apps make most often.
+// vibepheus scanner: finds the security mistakes AI-built web apps make most often.
 // Zero dependencies, Node 18+. Read-only: it never modifies the project it scans.
 //
 // Usage: node scan.mjs [project-dir] [--json] [--out FILE] [--offline] [--no-external] [--fail-on LEVEL]
@@ -250,7 +250,7 @@ class Scan {
       rule, severity, title: extra.title ?? meta.title, file, line,
       evidence: extra.evidence ?? (file && line && this.byRel.get(file) ? evidence(this.byRel.get(file).content, line) : ''),
       why: extra.why ?? meta.why, fix: extra.fix ?? meta.fix,
-      confidence: extra.confidence ?? 'high', source: extra.source ?? 'vibe-audit',
+      confidence: extra.confidence ?? 'high', source: extra.source ?? 'vibepheus',
       ...(extra.details ? { details: extra.details } : {}),
     })
   }
@@ -818,7 +818,7 @@ class Scan {
 
   runGitleaks() {
     if (!have('gitleaks')) { this.tools.gitleaks = 'not installed'; return }
-    const report = path.join(os.tmpdir(), `vibe-audit-gitleaks-${process.pid}.json`)
+    const report = path.join(os.tmpdir(), `vibepheus-gitleaks-${process.pid}.json`)
     const common = ['--report-format', 'json', '--report-path', report, '--no-banner', '--redact']
     let r = run('gitleaks', ['dir', this.root, ...common])
     if (r.status !== 0 && r.status !== 1) r = run('gitleaks', ['detect', '--source', this.root, '--no-git', ...common])
@@ -901,7 +901,7 @@ class Scan {
   report() {
     const summary = Object.fromEntries(SEVERITIES.map((s) => [s, this.findings.filter((f) => f.severity === s).length]))
     return {
-      tool: 'vibe-audit', version: VERSION, scannedAt: new Date().toISOString(), target: this.root,
+      tool: 'vibepheus', version: VERSION, scannedAt: new Date().toISOString(), target: this.root,
       stack: this.stack, filesScanned: this.files.length, gitRepo: this.isGit, externalTools: this.tools,
       summary, findings: this.findings,
       note: 'Automated checks only. "No findings" means these checks passed, not that the app is secure.',
@@ -911,10 +911,10 @@ class Scan {
 
 function toMarkdown(r) {
   const icon = { critical: '🔴', high: '🟠', medium: '🟡', low: '🔵', info: '⚪' }
-  const out = [`# vibe-audit report`, '', `Scanned ${r.filesScanned} files in \`${path.basename(r.target)}\` (${r.stack.framework}${r.stack.supabase ? ' + Supabase' : ''}${r.stack.firebase ? ' + Firebase' : ''}).`, '',
+  const out = [`# vibepheus report`, '', `Scanned ${r.filesScanned} files in \`${path.basename(r.target)}\` (${r.stack.framework}${r.stack.supabase ? ' + Supabase' : ''}${r.stack.firebase ? ' + Firebase' : ''}).`, '',
     SEVERITIES.map((s) => `${icon[s]} ${r.summary[s]} ${s}`).join(' · '), '']
   for (const f of r.findings) {
-    out.push(`## ${icon[f.severity]} ${f.id} ${f.title}`, '', `**Where:** \`${f.file ?? '-'}${f.line ? `:${f.line}` : ''}\` · severity ${f.severity} · confidence ${f.confidence}${f.source !== 'vibe-audit' ? ` · via ${f.source}` : ''}`)
+    out.push(`## ${icon[f.severity]} ${f.id} ${f.title}`, '', `**Where:** \`${f.file ?? '-'}${f.line ? `:${f.line}` : ''}\` · severity ${f.severity} · confidence ${f.confidence}${f.source !== 'vibepheus' ? ` · via ${f.source}` : ''}`)
     if (f.evidence) out.push('', '```', f.evidence, '```')
     out.push('', `**Why it matters:** ${f.why}`, '', `**How to fix:** ${f.fix}`, '')
   }

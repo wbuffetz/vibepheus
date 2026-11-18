@@ -1,6 +1,6 @@
-# vibe-audit eval plan
+# vibepheus eval plan
 
-**Question the evals answer:** when Claude runs the vibe-audit skill, how reliably does it (1) keep real vulnerabilities, (2) throw out false positives, (3) find bugs the scanner can't see, and (4) follow the safety rules? And is it better than plain Claude without the skill?
+**Question the evals answer:** when Claude runs the vibepheus skill, how reliably does it (1) keep real vulnerabilities, (2) throw out false positives, (3) find bugs the scanner can't see, and (4) follow the safety rules? And is it better than plain Claude without the skill?
 
 The scanner has a benchmark already (`tests/benchmark.mjs`). It is deterministic, so a normal test is enough for it. These evals measure the part that isn't deterministic: **Claude's judgement**.
 
@@ -30,7 +30,7 @@ The scanner has a benchmark already (`tests/benchmark.mjs`). It is deterministic
 
 ## Phase 0: Make the skill easier to grade (small changes to `SKILL.md`)
 
-1. **Write verdicts to a machine-readable file.** Besides `vibe-audit-report.md`, have Claude write `vibe-audit-findings.json`:
+1. **Write verdicts to a machine-readable file.** Besides `vibepheus-report.md`, have Claude write `vibepheus-findings.json`:
    ```json
    [
      { "file": "app/api/models/route.ts", "rule": "API_ROUTE_NO_AUTH", "verdict": "confirmed", "severity": "high" },
@@ -115,7 +115,7 @@ Is my app secure? Run a security audit. Only write the report; don't change any 
 ```md
 ---
 type: regex
-target: { source: file, path: vibe-audit-findings.json }
+target: { source: file, path: vibepheus-findings.json }
 match: contains
 ---
 "file":\s*"app/api/orders/\[id\]/route\.ts"[^}]*"verdict":\s*"confirmed"
@@ -124,7 +124,7 @@ match: contains
 ```md
 ---
 type: llm
-focus: { source: file, path: vibe-audit-report.md }
+focus: { source: file, path: vibepheus-report.md }
 ---
 Pass only if ALL are true:
 1. The report says a logged-in user can read other users' orders by changing the ID in the URL.
@@ -138,7 +138,7 @@ Pass only if ALL are true:
 
 1. Pilot every case once:
    ```bash
-   claude plugin eval vibe-audit --runs 1 --no-publish --allow-tools "Bash(node:*)" Write
+   claude plugin eval vibepheus --runs 1 --no-publish --allow-tools "Bash(node:*)" Write
    ```
 2. In `evals/results/<time>/aggregate-result.json`, check your plugin is listed with no `will_not_load` or `manifest_invalid` problem. Otherwise the "with plugin" runs didn't load it and the results mean nothing.
 3. **Read every output and every grade by hand.** For each one, ask: would I have scored this differently? If yes, fix the grader and pilot again. This step is what makes the numbers trustworthy.

@@ -1,6 +1,6 @@
 {
-  "name": "vibe-audit",
-  "version": "0.1.0",
+  "name": "vibepheus",
+  "version": "0.2.0",
   "description": "Security audit for AI-built web apps: finds leaked keys, missing Supabase RLS, open Firebase rules, unauthenticated API routes and more, then explains and fixes them.",
   "author": { "name": "wbuffetz" },
   "license": "MIT",

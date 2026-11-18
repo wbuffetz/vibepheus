@@ -1,6 +1,6 @@
 # Remediation guide
 
-Standard fixes for each vibe-audit rule. Adapt names to the user's code.
+Standard fixes for each vibepheus rule. Adapt names to the user's code.
 
 ## SECRET_IN_PUBLIC_ENV / HARDCODED_SECRET / SECRET_IN_GIT_HISTORY
 

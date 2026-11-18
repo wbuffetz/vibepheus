@@ -1,6 +1,6 @@
 ---
 type: llm
-focus: { source: file, path: vibe-audit-report.md }
+focus: { source: file, path: vibepheus-report.md }
 ---
 Pass only if ALL of these are true:
 1. The report does NOT present GET /api/notes/[id] as letting a user read other users' notes (an IDOR) at medium severity or above.

@@ -1,6 +1,6 @@
 ---
 type: llm
-focus: { source: file, path: vibe-audit-report.md }
+focus: { source: file, path: vibepheus-report.md }
 ---
 Pass only if ALL of these are true:
 1. The report says POST /api/chat/custom can be called without logging in.

@@ -1,9 +1,9 @@
 ---
-name: vibe-audit
+name: vibepheus
 description: Security audit for AI-built ("vibe-coded") web apps. Scans the project's source code for the mistakes these apps make most (leaked API keys, Supabase service_role keys in the browser, tables without Row Level Security, open Firebase rules, API routes with no auth, endpoints that spend money on AI/email/SMS APIs without limits, IDOR, open CORS, XSS, vulnerable dependencies), checks each finding, explains it in plain language and fixes what the user approves. Use when the user asks "is my app secure", "check my code for vulnerabilities", "security audit", "scan my project", "did I leak any keys", "is my Supabase safe", or before they launch.
 ---
 
-# vibe-audit
+# vibepheus
 
 You are auditing the user's own web app for security problems and helping them fix them.
 The user is often not a security person. Explain everything in plain language, without jargon or fear-mongering.
@@ -21,12 +21,12 @@ The user is often not a security person. Explain everything in plain language, w
 The scanner is `scripts/scan.mjs` in this skill's directory. It needs Node 18+ and nothing else.
 
 ```bash
-node "<this skill's directory>/scripts/scan.mjs" "<project directory>" --json --out /tmp/vibe-audit.json
+node "<this skill's directory>/scripts/scan.mjs" "<project directory>" --json --out /tmp/vibepheus.json
 ```
 
 Run it as one plain `node` command with the full paths written out. Do not use shell variables (`SK=...`), `cd &&` chains, pipes or subshells: many permission setups only allow commands that start with `node`, and anything else gets blocked.
 
-Then read `/tmp/vibe-audit.json`. It contains the detected stack, a severity summary and a list of findings, each with `rule`, `severity`, `confidence`, `file`, `line`, `evidence`, `why` and `fix`.
+Then read `/tmp/vibepheus.json`. It contains the detected stack, a severity summary and a list of findings, each with `rule`, `severity`, `confidence`, `file`, `line`, `evidence`, `why` and `fix`.
 
 If Semgrep, Gitleaks or osv-scanner are installed, the scanner uses them automatically (see `externalTools` in the output). If none are installed, mention once at the end that installing them adds coverage (`brew install semgrep gitleaks osv-scanner`). Do not install anything yourself without asking.
 
@@ -63,12 +63,12 @@ Report anything you find here as a finding with the same structure, marked `sour
 
 Write two files in the project root and tell the user both are there:
 
-- `vibe-audit-report.md`: the report for people (structure below).
-- `vibe-audit-findings.json`: your verdict on every finding, for tools such as CI checks and the eval suite (format below).
+- `vibepheus-report.md`: the report for people (structure below).
+- `vibepheus-findings.json`: your verdict on every finding, for tools such as CI checks and the eval suite (format below).
 
 If the project is a git repo, suggest adding both to `.gitignore` until the issues are fixed (they describe how to attack the app).
 
-### `vibe-audit-findings.json`
+### `vibepheus-findings.json`
 
 A JSON array with **one entry for every scanner finding** (including the ones you dismissed) and **one entry for every issue you found in manual review**. Each entry:
 
@@ -94,7 +94,7 @@ Example:
 
 Never put secret values in this file: the `reason` describes the problem, not the key. The file must be valid JSON (no comments, no trailing commas).
 
-### `vibe-audit-report.md`
+### `vibepheus-report.md`
 
 Structure:
 

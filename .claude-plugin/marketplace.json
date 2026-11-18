@@ -1,9 +1,14 @@
 {
-  "name": "vibe-audit",
-  "owner": { "name": "wbuffetz" },
+  "name": "vibepheus",
+  "owner": {
+    "name": "wbuffetz"
+  },
+  "metadata": {
+    "description": "vibepheus: take the red pill on your vibe-coded app. Security audit for AI-built web apps."
+  },
   "plugins": [
     {
-      "name": "vibe-audit",
+      "name": "vibepheus",
       "source": "./",
       "description": "Security audit for AI-built web apps."
     }

@@ -1,6 +1,6 @@
 ---
 type: llm
-focus: { source: file, path: vibe-audit-report.md }
+focus: { source: file, path: vibepheus-report.md }
 ---
 Pass only if ALL of these are true:
 1. The report says no serious (medium or above) vulnerabilities were found.
