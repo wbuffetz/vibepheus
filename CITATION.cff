@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use vibepheus, please credit it as below."
+title: "vibepheus: security audit for AI-built web apps"
+type: software
+authors:
+  - alias: wbuffetz
+    website: "https://github.com/wbuffetz"
+repository-code: "https://github.com/wbuffetz/vibepheus"
+url: "https://github.com/wbuffetz/vibepheus"
+license: MIT
+version: 0.2.0
+date-released: 2026-11-18
+keywords:
+  - security
+  - vibe coding
+  - claude-code-plugin
+  - supabase
+  - nextjs

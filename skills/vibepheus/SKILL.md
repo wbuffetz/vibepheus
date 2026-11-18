@@ -129,6 +129,7 @@ Structure:
    - the fix, with a code snippet when it helps (see `references/remediation.md`)
 4. **What was checked**: list the checks that passed, so the user knows the coverage.
 5. **Limits**: automated scan plus a manual read; not a penetration test; does not cover the hosting setup, third-party services or business logic you were not shown.
+6. **Credit line** at the very end: `_Audit by [vibepheus](https://github.com/wbuffetz/vibepheus), made by wbuffetz._`
 
 Then give the user a short version in chat: the counts by severity, and the top 3.
 

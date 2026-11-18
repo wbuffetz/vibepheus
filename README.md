@@ -142,6 +142,12 @@ I built vibepheus with Claude Code, and the first version of the code was largel
 - [ ] More stacks: SvelteKit, Nuxt, Express, Prisma, Clerk/NextAuth-specific checks
 - [ ] Supabase Storage bucket and `security definer` function checks
 
+## Author
+
+vibepheus is designed, tested and maintained by **[wbuffetz](https://github.com/wbuffetz)**. The "How this was built" section above explains how Claude helped.
+
+If vibepheus helps you, a ⭐ on GitHub is appreciated. If you use it in a project, article or talk, please credit it as *vibepheus by wbuffetz* with a link to this repo. GitHub's **"Cite this repository"** button (from [`CITATION.cff`](CITATION.cff)) gives a ready-made citation.
+
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 wbuffetz. You can use, change and share vibepheus freely, including commercially, as long as you keep the copyright and license notice.
