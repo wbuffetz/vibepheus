@@ -24,6 +24,8 @@ The scanner is `scripts/scan.mjs` in this skill's directory. It needs Node 18+ a
 node "<this skill's directory>/scripts/scan.mjs" "<project directory>" --json --out /tmp/vibe-audit.json
 ```
 
+Run it as one plain `node` command with the full paths written out. Do not use shell variables (`SK=...`), `cd &&` chains, pipes or subshells: many permission setups only allow commands that start with `node`, and anything else gets blocked.
+
 Then read `/tmp/vibe-audit.json`. It contains the detected stack, a severity summary and a list of findings, each with `rule`, `severity`, `confidence`, `file`, `line`, `evidence`, `why` and `fix`.
 
 If Semgrep, Gitleaks or osv-scanner are installed, the scanner uses them automatically (see `externalTools` in the output). If none are installed, mention once at the end that installing them adds coverage (`brew install semgrep gitleaks osv-scanner`). Do not install anything yourself without asking.
@@ -59,7 +61,40 @@ Report anything you find here as a finding with the same structure, marked `sour
 
 ## Step 4: Write the report
 
-Write the report to `vibe-audit-report.md` in the project root, and tell the user it is there. If the project is a git repo, suggest adding it to `.gitignore` until the issues are fixed (the report describes how to attack the app).
+Write two files in the project root and tell the user both are there:
+
+- `vibe-audit-report.md`: the report for people (structure below).
+- `vibe-audit-findings.json`: your verdict on every finding, for tools such as CI checks and the eval suite (format below).
+
+If the project is a git repo, suggest adding both to `.gitignore` until the issues are fixed (they describe how to attack the app).
+
+### `vibe-audit-findings.json`
+
+A JSON array with **one entry for every scanner finding** (including the ones you dismissed) and **one entry for every issue you found in manual review**. Each entry:
+
+| field | value |
+|---|---|
+| `file` | path relative to the project root, exactly as the scanner reports it (or the file you found the issue in) |
+| `line` | line number, or `null` |
+| `rule` | the scanner's rule name; for manual-review issues, a short UPPER_SNAKE_CASE name (e.g. `SERVER_ACTION_NO_AUTH`, `PRICE_FROM_CLIENT`) |
+| `verdict` | `"confirmed"`, `"false_positive"` or `"needs_user"` |
+| `severity` | your final severity after checking the code (`critical`, `high`, `medium`, `low`, `info`); may differ from the scanner's |
+| `source` | `"scanner"` or `"manual review"` |
+| `reason` | one sentence explaining the verdict |
+
+Example:
+
+```json
+[
+  { "file": "app/api/orders/[id]/route.ts", "line": 13, "rule": "POSSIBLE_IDOR", "verdict": "confirmed", "severity": "high", "source": "scanner", "reason": "Loads the order with the admin client and never checks it belongs to the user." },
+  { "file": "app/auth/callback/route.ts", "line": 5, "rule": "API_ROUTE_NO_AUTH", "verdict": "false_positive", "severity": "info", "source": "scanner", "reason": "OAuth callback; it must be public." },
+  { "file": "app/actions.ts", "line": 8, "rule": "SERVER_ACTION_NO_AUTH", "verdict": "confirmed", "severity": "high", "source": "manual review", "reason": "Server action deletes a project by ID without checking the current user." }
+]
+```
+
+Never put secret values in this file: the `reason` describes the problem, not the key. The file must be valid JSON (no comments, no trailing commas).
+
+### `vibe-audit-report.md`
 
 Structure:
 
