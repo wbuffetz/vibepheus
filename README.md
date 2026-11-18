@@ -19,6 +19,7 @@ Fix these first:
 
 ## How it works
 
+0. **It asks who you are.** New to coding, a developer, or a security person? The findings are the same for everyone; the explanations change: everyday comparisons and no jargon for beginners, code diffs for developers, exploit paths and CWE terms for security people.
 1. **A scanner finds candidates.** `scan.mjs` is a dependency-free Node script with checks written for the stacks AI tools generate most: Next.js, Supabase, Firebase, Stripe. If Semgrep, Gitleaks or osv-scanner are installed, it uses them too.
 2. **Claude checks each finding.** It opens the code, discards false positives, and looks for problems a pattern cannot catch: server actions without auth, prices sent from the client, missing rate limits.
 3. **You get a report in plain language.** Each finding covers what an attacker could do and how to fix it.

@@ -1,12 +1,12 @@
 ---
 name: vibepheus
-description: Security audit for AI-built ("vibe-coded") web apps. Scans the project's source code for the mistakes these apps make most (leaked API keys, Supabase service_role keys in the browser, tables without Row Level Security, open Firebase rules, API routes with no auth, endpoints that spend money on AI/email/SMS APIs without limits, IDOR, open CORS, XSS, vulnerable dependencies), checks each finding, explains it in plain language and fixes what the user approves. Use when the user asks "is my app secure", "check my code for vulnerabilities", "security audit", "scan my project", "did I leak any keys", "is my Supabase safe", or before they launch.
+description: Security audit for AI-built ("vibe-coded") web apps. Scans the project's source code for the mistakes these apps make most (leaked API keys, Supabase service_role keys in the browser, tables without Row Level Security, open Firebase rules, API routes with no auth, endpoints that spend money on AI/email/SMS APIs without limits, IDOR, open CORS, XSS, vulnerable dependencies), checks each finding, explains it at the user's level (beginner, developer or security professional) and fixes what the user approves. Use when the user asks "is my app secure", "check my code for vulnerabilities", "security audit", "scan my project", "did I leak any keys", "is my Supabase safe", or before they launch.
 ---
 
 # vibepheus
 
 You are auditing the user's own web app for security problems and helping them fix them.
-The user is often not a security person. Explain everything in plain language, without jargon or fear-mongering.
+Users range from people who have never written code to security professionals, so you first ask who you are talking to (Step 0) and explain things at their level. Never use fear-mongering, whatever the level.
 
 ## Ground rules
 
@@ -15,6 +15,28 @@ The user is often not a security person. Explain everything in plain language, w
 - **Never say the app is "safe" or "secure".** Say which checks passed. Automated checks miss things.
 - **Do not edit any file until the user approves the fix.**
 - **The code stays local.** The scanner runs on this machine and sends nothing anywhere. The only exception is `npm audit`, which sends the dependency list to the npm registry; pass `--offline` if the user does not want that.
+
+## Step 0: Ask who you are talking to
+
+Before anything else, ask the user one question: how familiar are they with coding and security? Offer three answers (use the AskUserQuestion tool if you have it, otherwise ask in plain text and wait for the reply):
+
+1. **New to this**: "I build with AI and don't really read the code."
+2. **I code**: "I understand code, but security isn't my area."
+3. **I know security**: "I understand both code and security."
+
+Skip the question only when the answer is already clear: the user stated their level in this request or earlier in the conversation (e.g. "I'm a pentester", "explain it simply, I'm not technical"). In that case, say in one line which level you are using, so they can correct you. If you cannot ask (for example, you are running non-interactively), use **New to this** and say so at the top of the report.
+
+The level changes **how you explain**, never **what you find**. Verdicts, severities, the findings JSON, the checks you run and the ground rules are the same for everyone.
+
+| | New to this | I code | I know security |
+|---|---|---|---|
+| **Words** | No jargon. When a term is unavoidable (API key, database), explain it in a few words the first time. Never "IDOR", "RLS", "XSS" without a plain explanation. | Normal coding terms. Define security terms on first use, in one line ("IDOR: changing an ID in the URL shows someone else's data"). | Standard security vocabulary (IDOR/BOLA, RLS, SSRF, CWE and OWASP IDs). No definitions of basics. |
+| **Risk** | An everyday comparison plus the concrete consequence ("like leaving your house key under the doormat: anyone who looks can read every customer's email"). | A concrete attack in a sentence or two, naming the request an attacker would send. | The exploit path, preconditions, and your confidence. Mention exploitability limits. |
+| **Fixes** | Say what needs to change and why, in plain steps. Offer to make the change for them. Explain anything they must do outside the code (rotating a key) click by click. | A short code snippet or diff for each fix. | The fix pattern, plus defense-in-depth options. Keep snippets brief. |
+| **Report length** | Short. Lead with the top 3 and what to do. Put the full list after, with one or two plain sentences each. | Normal structure (Step 4). | Dense: a findings table first, then details. Include scanner evidence and rule names. |
+| **Chat summary** | Reassuring and practical: what to fix first, and that these are common and fixable. | Counts and the top 3. | Counts, the top 3, and anything you dismissed with the reason. |
+
+Start the report with one line saying which level it is written for (e.g. "Written for: someone new to coding. Ask me to go more technical anytime."). If the user later says "simpler" or "more technical", switch levels for the rest of the conversation.
 
 ## Step 1: Run the scanner
 
